@@ -1,0 +1,181 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Italian Verb Player</title><style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#163451;background:#eef3f9}*{box-sizing:border-box}body{margin:0}.shell{max-width:1040px;margin:26px auto;padding:0 18px}header{display:flex;align-items:center;gap:14px;margin-bottom:18px}.logo{background:#193e7b;color:white;border-radius:13px;padding:13px;font-size:25px}h1{margin:0;font-size:26px}header p{margin:5px 0;color:#5e6e83}.layout{display:grid;grid-template-columns:310px 1fr;gap:18px}.panel,.stage{background:white;border-radius:18px;box-shadow:0 4px 24px #193e7b13;padding:22px}.panel{align-self:start}label{display:block;font-weight:bold;font-size:13px;margin:15px 0 7px}input,select{width:100%;font-size:17px;border:1px solid #c7d4e4;border-radius:9px;padding:11px;background:white;color:#163451}.control{display:flex;align-items:center;gap:10px}.control input{width:auto;flex:1}.control output{width:46px;text-align:right;color:#56677b}button{cursor:pointer;border:0;border-radius:10px;padding:12px 15px;font-size:15px;font-weight:bold}button.primary{background:#1b4c91;color:white}button.secondary{background:#e9f0fa;color:#1b4c91}button:disabled{opacity:.4;cursor:default}.buttons{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:17px}.buttons .wide{grid-column:span 2}.switch{display:flex;gap:9px;align-items:center;margin-top:16px;font-size:14px}.switch input{width:18px;height:18px;accent-color:#1b4c91}.switch label{margin:0;font-size:14px;font-weight:normal}.note{font-size:12px;color:#64748b;line-height:1.5;margin-top:20px}.stage{min-height:550px;display:flex;flex-direction:column;padding:26px}.board{border-radius:15px;background:linear-gradient(135deg,#173b79,#255fac);color:white;padding:30px;flex:1}.board h2{text-align:center;font-size:38px;letter-spacing:1px;margin:0}.subtitle{text-align:center;opacity:.84;margin:8px 0 27px}.forms{display:grid;gap:8px;max-width:480px;margin:auto}.form{min-height:51px;display:flex;justify-content:space-between;align-items:center;padding:9px 20px;border-radius:9px;background:#ffffff12;font-size:20px}.form b{font-size:24px}.form.future{opacity:.26}.form.new{background:#fff2b8;color:#15365e}.form.new b{color:#0b488e}.bottom{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-top:17px}.status{color:#637489;font-size:14px}.small{font-size:12px}.warning{background:#fff6d7;color:#79521b;border-radius:9px;padding:10px;margin-top:12px;font-size:13px;line-height:1.5}.hide{display:none}.tip{margin:15px 0 0;color:#5a6a7e;font-size:13px;line-height:1.5}@media(max-width:760px){.layout{grid-template-columns:1fr}.stage{min-height:500px}.board{padding:25px 14px}.board h2{font-size:29px}.form{font-size:17px}.form b{font-size:20px}header h1{font-size:22px}}
+</style></head><body><div class="shell"><header><div class="logo">🇮🇹</div><div><h1>Italian Verb Player</h1><p>Reveal · Listen · Repeat · Learn</p></div></header><div class="layout"><aside class="panel"><label for="verb">Italian verb (infinitive, including reflexives)</label><input id="verb" value="spazzare" spellcheck="false" autocomplete="off"><label for="tense">Tense</label><select id="tense"><option value="present">Presente indicativo</option><option value="imperfect">Imperfetto</option><option value="future">Futuro semplice</option><option value="perfect">Passato prossimo</option></select><label for="aux">Passato prossimo auxiliary</label><select id="aux"><option value="auto">Automatic (known verbs)</option><option value="avere">Avere</option><option value="essere">Essere</option></select><label for="voice">Italian voice</label><select id="voice"><option>Checking browser voices…</option></select><label for="rate">Voice speed</label><div class="control"><input id="rate" type="range" min="0.65" max="1.2" value="0.85" step="0.05"><output id="rateValue">0.85×</output></div><label for="pause">Pause between forms</label><div class="control"><input id="pause" type="range" min="1" max="8" value="3" step="0.5"><output id="pauseValue">3 s</output></div><div class="switch"><input type="checkbox" id="pronouns" checked><label for="pronouns">Speak pronouns as well</label></div><div class="switch"><input type="checkbox" id="highlight" checked><label for="highlight">Highlight newest form</label></div><div class="buttons"><button class="primary wide" id="play">▶ Play automatically</button><button class="secondary" id="next">Next form →</button><button class="secondary" id="repeat">🔊 Repeat</button><button class="secondary wide" id="reset">↺ Start again</button></div><div id="warning" class="warning hide"></div><div class="note">Works without an account or internet connection once downloaded. Speech uses your browser's installed Italian voices. Chrome or Edge on Windows is recommended. Includes regular spelling rules, reflexives, subject agreement and many common irregular forms. Italian has exceptions: verify unfamiliar verbs before teaching. The auxiliary selector can correct verbs not in the built-in list.</div></aside><main class="stage"><div class="board"><h2 id="title">SPAZZARE</h2><p class="subtitle" id="subtitle">Presente indicativo</p><div class="forms" id="forms"></div></div><div class="bottom"><span class="status" id="status">Ready — press Play or Next form</span><span class="status small">Use ← to reset and → for the next form</span></div><p class="tip">Classroom tip: press <strong>Next form</strong> to control the pace. For independent study, press <strong>Play automatically</strong>. Previously revealed conjugations remain visible.</p></main></div></div><script>
+'use strict';
+const $=id=>document.getElementById(id), pro=['io','tu','lui / lei','noi','voi','loro'];
+const irregular={
+ essere:{present:['sono','sei','è','siamo','siete','sono'],imperfect:['ero','eri','era','eravamo','eravate','erano'],future:['sarò','sarai','sarà','saremo','sarete','saranno'],pp:'stato',aux:'essere'},
+ avere:{present:['ho','hai','ha','abbiamo','avete','hanno'],imperfect:['avevo','avevi','aveva','avevamo','avevate','avevano'],future:['avrò','avrai','avrà','avremo','avrete','avranno'],pp:'avuto'},
+ fare:{present:['faccio','fai','fa','facciamo','fate','fanno'],imperfect:['facevo','facevi','faceva','facevamo','facevate','facevano'],future:['farò','farai','farà','faremo','farete','faranno'],pp:'fatto'},
+ andare:{present:['vado','vai','va','andiamo','andate','vanno'],imperfect:['andavo','andavi','andava','andavamo','andavate','andavano'],future:['andrò','andrai','andrà','andremo','andrete','andranno'],pp:'andato',aux:'essere'},
+ stare:{present:['sto','stai','sta','stiamo','state','stanno'],imperfect:['stavo','stavi','stava','stavamo','stavate','stavano'],future:['starò','starai','starà','staremo','starete','staranno'],pp:'stato',aux:'essere'},
+ dare:{present:['do','dai','dà','diamo','date','danno'],imperfect:['davo','davi','dava','davamo','davate','davano'],future:['darò','darai','darà','daremo','darete','daranno'],pp:'dato'},
+ dire:{present:['dico','dici','dice','diciamo','dite','dicono'],imperfect:['dicevo','dicevi','diceva','dicevamo','dicevate','dicevano'],future:['dirò','dirai','dirà','diremo','direte','diranno'],pp:'detto'},
+ venire:{present:['vengo','vieni','viene','veniamo','venite','vengono'],imperfect:['venivo','venivi','veniva','venivamo','venivate','venivano'],future:['verrò','verrai','verrà','verremo','verrete','verranno'],pp:'venuto',aux:'essere'},
+ uscire:{present:['esco','esci','esce','usciamo','uscite','escono'],imperfect:['uscivo','uscivi','usciva','uscivamo','uscivate','uscivano'],future:['uscirò','uscirai','uscirà','usciremo','uscirete','usciranno'],pp:'uscito',aux:'essere'},
+ sapere:{present:['so','sai','sa','sappiamo','sapete','sanno'],imperfect:['sapevo','sapevi','sapeva','sapevamo','sapevate','sapevano'],future:['saprò','saprai','saprà','sapremo','saprete','sapranno'],pp:'saputo'},
+ potere:{present:['posso','puoi','può','possiamo','potete','possono'],imperfect:['potevo','potevi','poteva','potevamo','potevate','potevano'],future:['potrò','potrai','potrà','potremo','potrete','potranno'],pp:'potuto'},
+ volere:{present:['voglio','vuoi','vuole','vogliamo','volete','vogliono'],imperfect:['volevo','volevi','voleva','volevamo','volevate','volevano'],future:['vorrò','vorrai','vorrà','vorremo','vorrete','vorranno'],pp:'voluto'},
+ dovere:{present:['devo','devi','deve','dobbiamo','dovete','devono'],imperfect:['dovevo','dovevi','doveva','dovevamo','dovevate','dovevano'],future:['dovrò','dovrai','dovrà','dovremo','dovrete','dovranno'],pp:'dovuto'},
+ bere:{present:['bevo','bevi','beve','beviamo','bevete','bevono'],imperfect:['bevevo','bevevi','beveva','bevevamo','bevevate','bevevano'],future:['berrò','berrai','berrà','berremo','berrete','berranno'],pp:'bevuto'},
+ rimanere:{present:['rimango','rimani','rimane','rimaniamo','rimanete','rimangono'],imperfect:['rimanevo','rimanevi','rimaneva','rimanevamo','rimanevate','rimanevano'],future:['rimarrò','rimarrai','rimarrà','rimarremo','rimarrete','rimarranno'],pp:'rimasto',aux:'essere'},
+ vedere:{present:['vedo','vedi','vede','vediamo','vedete','vedono'],imperfect:['vedevo','vedevi','vedeva','vedevamo','vedevate','vedevano'],future:['vedrò','vedrai','vedrà','vedremo','vedrete','vedranno'],pp:'visto'},
+ leggere:{present:['leggo','leggi','legge','leggiamo','leggete','leggono'],imperfect:['leggevo','leggevi','leggeva','leggevamo','leggevate','leggevano'],future:['leggerò','leggerai','leggerà','leggeremo','leggerete','leggeranno'],pp:'letto'},
+ scrivere:{present:['scrivo','scrivi','scrive','scriviamo','scrivete','scrivono'],imperfect:['scrivevo','scrivevi','scriveva','scrivevamo','scrivevate','scrivevano'],future:['scriverò','scriverai','scriverà','scriveremo','scriverete','scriveranno'],pp:'scritto'},
+ prendere:{present:['prendo','prendi','prende','prendiamo','prendete','prendono'],imperfect:['prendevo','prendevi','prendeva','prendevamo','prendevate','prendevano'],future:['prenderò','prenderai','prenderà','prenderemo','prenderete','prenderanno'],pp:'preso'},
+ mettere:{present:['metto','metti','mette','mettiamo','mettete','mettono'],imperfect:['mettevo','mettevi','metteva','mettevamo','mettevate','mettevano'],future:['metterò','metterai','metterà','metteremo','metterete','metteranno'],pp:'messo'},
+ aprire:{present:['apro','apri','apre','apriamo','aprite','aprono'],imperfect:['aprivo','aprivi','apriva','aprivamo','aprivate','aprivano'],future:['aprirò','aprirai','aprirà','apriremo','aprirete','apriranno'],pp:'aperto'},
+ chiudere:{present:['chiudo','chiudi','chiude','chiudiamo','chiudete','chiudono'],imperfect:['chiudevo','chiudevi','chiudeva','chiudevamo','chiudevate','chiudevano'],future:['chiuderò','chiuderai','chiuderà','chiuderemo','chiuderete','chiuderanno'],pp:'chiuso'},
+ vivere:{present:['vivo','vivi','vive','viviamo','vivete','vivono'],imperfect:['vivevo','vivevi','viveva','vivevamo','vivevate','vivevano'],future:['vivrò','vivrai','vivrà','vivremo','vivrete','vivranno'],pp:'vissuto'},
+ morire:{present:['muoio','muori','muore','moriamo','morite','muoiono'],imperfect:['morivo','morivi','moriva','morivamo','morivate','morivano'],future:['morirò','morirai','morirà','moriremo','morirete','moriranno'],pp:'morto',aux:'essere'},
+ nascere:{present:['nasco','nasci','nasce','nasciamo','nascete','nascono'],imperfect:['nascevo','nascevi','nasceva','nascevamo','nascevate','nascevano'],future:['nascerò','nascerai','nascerà','nasceremo','nascerete','nasceranno'],pp:'nato',aux:'essere'},
+ finire:{present:['finisco','finisci','finisce','finiamo','finite','finiscono'],pp:'finito'},
+ capire:{present:['capisco','capisci','capisce','capiamo','capite','capiscono'],pp:'capito'},
+ preferire:{present:['preferisco','preferisci','preferisce','preferiamo','preferite','preferiscono'],pp:'preferito'},
+ pulire:{present:['pulisco','pulisci','pulisce','puliamo','pulite','puliscono'],pp:'pulito'},
+ costruire:{present:['costruisco','costruisci','costruisce','costruiamo','costruite','costruiscono'],pp:'costruito'}
+};
+// Additional common irregulars and auxiliary selection for intransitive verbs.
+Object.assign(irregular,{
+ parlare:{pp:'parlato'},studiare:{pp:'studiato'},spazzare:{pp:'spazzato'},mangiare:{pp:'mangiato'},
+ dormire:{pp:'dormito'},partire:{pp:'partito',aux:'essere'},arrivare:{pp:'arrivato',aux:'essere'},
+ tornare:{pp:'tornato',aux:'essere'},entrare:{pp:'entrato',aux:'essere'},cadere:{pp:'caduto',aux:'essere'},
+ salire:{present:['salgo','sali','sale','saliamo','salite','salgono'],pp:'salito',aux:'essere'},
+ scendere:{pp:'sceso',aux:'essere'},crescere:{pp:'cresciuto',aux:'essere'},
+ diventare:{pp:'diventato',aux:'essere'},succedere:{pp:'successo',aux:'essere'},
+ piacere:{present:['piaccio','piaci','piace','piacciamo','piacete','piacciono'],pp:'piaciuto',aux:'essere'},
+ correre:{pp:'corso'},perdere:{pp:'perso'},rispondere:{pp:'risposto'},chiedere:{pp:'chiesto'},
+ scegliere:{present:['scelgo','scegli','sceglie','scegliamo','scegliete','scelgono'],pp:'scelto'},
+ spegnere:{pp:'spento'},accendere:{pp:'acceso'},decidere:{pp:'deciso'},
+ rompere:{pp:'rotto'},vincere:{pp:'vinto'},piangere:{pp:'pianto'},
+ conoscere:{present:['conosco','conosci','conosce','conosciamo','conoscete','conoscono'],pp:'conosciuto'},
+ tenere:{present:['tengo','tieni','tiene','teniamo','tenete','tengono'],future:['terrò','terrai','terrà','terremo','terrete','terranno'],pp:'tenuto'},
+ scegliere:{present:['scelgo','scegli','sceglie','scegliamo','scegliete','scelgono'],pp:'scelto'},
+ tradurre:{present:['traduco','traduci','traduce','traduciamo','traducete','traducono'],imperfect:['traducevo','traducevi','traduceva','traducevamo','traducevate','traducevano'],future:['tradurrò','tradurrai','tradurrà','tradurremo','tradurrete','tradurranno'],pp:'tradotto'},
+ giocare:{pp:'giocato'},cercare:{pp:'cercato'},pagare:{pp:'pagato'},
+ cominciare:{pp:'cominciato'},lasciare:{pp:'lasciato'},viaggiare:{pp:'viaggiato'},
+ lavorare:{pp:'lavorato'},camminare:{pp:'camminato'},aspettare:{pp:'aspettato'},
+ incontrare:{pp:'incontrato'},guardare:{pp:'guardato'},comprare:{pp:'comprato'},
+ visitare:{pp:'visitato'},abitare:{pp:'abitato'},chiamare:{pp:'chiamato'},
+ lavare:{pp:'lavato'},alzare:{pp:'alzato'},svegliare:{pp:'svegliato'},
+ vestire:{pp:'vestito'},sentire:{pp:'sentito'},divertire:{pp:'divertito'},
+ sedere:{present:['siedo','siedi','siede','sediamo','sedete','siedono'],pp:'seduto'},
+ uscire:irregular.uscire
+});
+const presentSuffix={are:['o','i','a','iamo','ate','ano'],ere:['o','i','e','iamo','ete','ono'],ire:['o','i','e','iamo','ite','ono']};
+const impSuffix={are:['avo','avi','ava','avamo','avate','avano'],ere:['evo','evi','eva','evamo','evate','evano'],ire:['ivo','ivi','iva','ivamo','ivate','ivano']};
+const futSuffix=['ò','ai','à','emo','ete','anno'];
+const helpers={avere:['ho','hai','ha','abbiamo','avete','hanno'],essere:['sono','sei','è','siamo','siete','sono']};
+const reflexivePronouns=['mi','ti','si','ci','vi','si'];
+function agree(pp,i){
+  if(!pp.endsWith('o'))return pp; // standard participles generally end in -o
+  const stem=pp.slice(0,-1);
+  return stem+(['o/a','o/a','o/a','i/e','i/e','i/e'][i]);
+}
+function analyzeVerb(input){
+ const reflexive=/(arsi|ersi|irsi)$/.test(input);
+ const verb=reflexive?input.slice(0,-2)+'e':input;
+ return {verb,reflexive};
+}
+function getForms(input,t){
+ const {verb:v,reflexive}=analyzeVerb(input);
+ const known=irregular[v];
+ const ending=v.slice(-3);
+ if(!['are','ere','ire'].includes(ending))return {forms:null,warning:'Enter an Italian infinitive ending in -are, -ere, -ire, or the reflexive forms -arsi, -ersi, -irsi.'};
+ const stem=v.slice(0,-3);
+ let warning='';
+ let forms;
+ if(known && known[t] && t!=='perfect')forms=known[t].slice();
+ else if(t==='present'){
+   const isc=ending==='ire' && /(?:finire|capire|preferire|pulire|costruire|spedire|restituire|obbedire|guarire|colpire|proibire|suggerire)/.test(v);
+   forms=presentSuffix[ending].map((suffix,i)=>{
+     if(isc && [0,1,2,5].includes(i))return stem+'isc'+suffix;
+     let base=stem;
+     // cercare -> cerchi; pagare -> paghi, cerchiamo, paghiamo
+     if(ending==='are' && /[cg]$/.test(stem) && [1,3].includes(i))base+='h';
+     // studiare -> studi, studiamo; mangiare -> mangi, mangiamo
+     if(ending==='are' && /[cg]i$/.test(stem) && [1,3].includes(i))base=stem.slice(0,-1);
+     if(ending==='are' && /[^cg]i$/.test(stem) && [1,3].includes(i))base=stem.slice(0,-1);
+     return base+suffix;
+   });
+ }else if(t==='imperfect'){
+   forms=impSuffix[ending].map(suffix=>stem+suffix);
+ }else if(t==='future'){
+   let base=ending==='are'?stem+'er':v.slice(0,-1);
+   // mangiare -> mangerò, cominciare -> comincerò, lasciare -> lascerò
+   if(ending==='are' && /[cg]i$/.test(stem))base=stem.slice(0,-1)+'er';
+   // cercare -> cercherò, pagare -> pagherò
+   if(ending==='are' && /[cg]$/.test(stem))base=stem+'her';
+   forms=futSuffix.map(s=>base+s);
+ }else if(t==='perfect'){
+   const pp=known?.pp || stem+({are:'ato',ere:'uto',ire:'ito'}[ending]);
+   const requested=$('aux')?.value || 'auto';
+   const aux=reflexive?'essere':(requested==='auto'?(known?.aux||'avere'):requested);
+   forms=helpers[aux].map((h,i)=>h+' '+(aux==='essere'?agree(pp,i):pp));
+   if(!reflexive && requested==='auto' && !known?.aux && !(known && known.pp))warning='Auxiliary and/or participle estimated. Check the verb or choose essere/avere explicitly.';
+   else if(!reflexive && requested==='auto' && !known?.aux)warning='Using avere as the default auxiliary. Some intransitive verbs require essere: choose the correct auxiliary when needed.';
+ }
+ if(reflexive)forms=forms.map((f,i)=>reflexivePronouns[i]+' '+f);
+ if(!known && t!=='perfect')warning='Regular-pattern conjugation. Some Italian verbs have irregular stems or spelling changes; verify unfamiliar verbs.';
+ if(t==='perfect' && (reflexive || forms.some(f=>f.includes('/'))))warning=(warning?warning+' ':'')+'Past participles with essere agree in gender and number; slash forms show masculine/feminine alternatives.';
+ return {forms,warning,reflexive};
+}
+let index=0,playing=false,stopTimer=null,voices=[],activeSpeech=null,runId=0;function stop(){playing=false;runId++;clearTimeout(stopTimer);stopTimer=null;if('speechSynthesis'in window)window.speechSynthesis.cancel();$('play').textContent='▶ Play automatically';}
+function refresh(){stop();index=0;draw()};function draw(){let v=$('verb').value.trim().toLowerCase();let t=$('tense').value;let obj=getForms(v,t), forms=obj.forms;$('title').textContent=(v||'VERBO').toUpperCase();$('subtitle').textContent={present:'Presente indicativo',imperfect:'Imperfetto',future:'Futuro semplice',perfect:'Passato prossimo'}[t];let area=$('forms');area.replaceChildren();if(!forms){$('warning').textContent=obj.warning;$('warning').classList.remove('hide');$('play').disabled=true;$('next').disabled=true;return;} $('play').disabled=false;$('next').disabled=index===6;$('warning').textContent=obj.warning;$('warning').classList.toggle('hide',!obj.warning);forms.forEach((f,i)=>{const row=document.createElement('div');row.className='form'+(i>=index?' future':'')+(i===index-1&&$('highlight').checked?' new':'');const p=document.createElement('span');p.textContent=pro[i];const b=document.createElement('b');b.textContent=i<index?f:'—';row.append(p,b);area.append(row)});$('status').textContent=index===0?'Ready — press Play or Next form':index===6?'Complete — all six forms visible':index+' of 6 forms revealed';}
+function speak(i,done){
+ const v=$('verb').value.trim().toLowerCase(),o=getForms(v,$('tense').value);
+ if(!o.forms||i<0||i>5){done?.();return;}
+ if(!('speechSynthesis'in window)){done?.();return;}
+ window.speechSynthesis.cancel();
+ let form=o.forms[i];
+ // Turn written gender shorthand into words suitable for speech.
+ // E.g. "è andato/a" becomes "è andato" and "è andata".
+ const expandGender=(value)=>{
+   const slash=/([A-Za-zÀ-ÿ]+)\/([A-Za-zÀ-ÿ]+)/g;
+   const masculine=value.replace(slash,(whole,word,suffix)=>word);
+   const feminine=value.replace(slash,(whole,word,suffix)=>{
+     // Italian short ending shorthand: andato/a, lavati/e, arrivato/a.
+     if(suffix.length===1)return word.slice(0,-1)+suffix;
+     return suffix;
+   });
+   return [masculine,feminine];
+ };
+ const variants=expandGender(form);
+ const sayPronouns=$('pronouns').checked;
+ let phrase;
+ if(i===2){
+   // The display row says "lui / lei"; do not attribute the feminine form to lui.
+   phrase=sayPronouns
+     ? 'Lui '+variants[0]+'. Lei '+variants[1]+'.'
+     : variants[0]+'. '+variants[1]+'.';
+ }else if(form.includes('/')){
+   phrase=variants.map(f=>(sayPronouns?pro[i]+' ':'')+f+'.').join(' ');
+ }else{
+   phrase=(sayPronouns?pro[i]+' ':'')+form+'.';
+ }
+ const u=new SpeechSynthesisUtterance(phrase);u.lang='it-IT';u.rate=Number($('rate').value);
+ const voice=voices.find(x=>x.voiceURI===$('voice').value);if(voice)u.voice=voice;
+ let finished=false;const finish=()=>{if(finished)return;finished=true;clearTimeout(fallback);done?.()};
+ u.onend=finish;u.onerror=finish;
+ // Some browsers never dispatch onend, especially when a voice is missing.
+ const fallback=setTimeout(finish,Math.max(3500,phrase.length*190));
+ window.speechSynthesis.speak(u);
+}
+function next(){if(index>=6)return;stop();index++;draw();speak(index-1)}
+function play(){
+ if(playing){stop();return;}
+ if(index>=6)index=0;
+ playing=true;$('play').textContent='■ Stop playback';let token=++runId;
+ const iterate=()=>{
+  if(!playing||token!==runId)return;
+  if(index>=6){playing=false;$('play').textContent='↻ Play from start';draw();$('status').textContent='Automatic playback finished — press Play to repeat';return;}
+  index++;draw();speak(index-1,()=>{
+   if(!playing||token!==runId)return;
+   stopTimer=setTimeout(iterate,Number($('pause').value)*1000);
+  });
+ };
+ iterate();
+}
+function loadVoices(){if(!('speechSynthesis'in window)){$('voice').innerHTML='<option>Speech unavailable in this browser</option>';return;}let prev=$('voice').value;voices=speechSynthesis.getVoices().filter(v=>/^it([_-]|$)/i.test(v.lang));$('voice').replaceChildren();if(voices.length===0){let o=document.createElement('option');o.value='';o.textContent='No installed Italian voice — browser default';$('voice').append(o);return;}voices.forEach(v=>{let o=document.createElement('option');o.value=v.voiceURI;o.textContent=v.name+(v.localService?' (installed)':'');$('voice').append(o)});if(voices.some(v=>v.voiceURI===prev))$('voice').value=prev;}
+$('verb').addEventListener('input',refresh);$('tense').addEventListener('change',refresh);$('aux').addEventListener('change',refresh);$('next').addEventListener('click',next);$('play').addEventListener('click',play);$('repeat').addEventListener('click',()=>{stop();if(index) speak(index-1)});$('reset').addEventListener('click',refresh);$('rate').addEventListener('input',()=>{$('rateValue').textContent=$('rate').value+'×'});$('pause').addEventListener('input',()=>{$('pauseValue').textContent=$('pause').value+' s'});$('highlight').addEventListener('change',draw);document.addEventListener('keydown',e=>{if(['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return;if(e.key==='ArrowRight'){e.preventDefault();next()}else if(e.key==='ArrowLeft'){e.preventDefault();refresh()}});if('speechSynthesis'in window){speechSynthesis.onvoiceschanged=loadVoices;loadVoices();setTimeout(loadVoices,500);}draw();
+</script></body></html>
